@@ -213,8 +213,15 @@ def getSymbolAsStyle(symbol, markerFolder, layer_transparency, interactivity,
     elif isinstance(sl, QgsSvgMarkerSymbolLayer):
         svgSize = sl.size() * 3.8
         if symbol.dataDefinedAngle().isActive():
-            if symbol.dataDefinedAngle().useExpression():
-                rot = "0"
+            # check if useExpression is defined
+            # if not, use the angle from the symbol
+            if hasattr(symbol.dataDefinedAngle(), "useExpression"):
+                if symbol.dataDefinedAngle().useExpression():
+                    rot = "0"
+                else:
+                    rot = "feature.get("
+                    rot += symbol.dataDefinedAngle().expressionOrField()
+                    rot += ") * 0.0174533"
             else:
                 rot = "feature.get("
                 rot += symbol.dataDefinedAngle().expressionOrField()
@@ -230,8 +237,8 @@ def getSymbolAsStyle(symbol, markerFolder, layer_transparency, interactivity,
         # save a colorized svg in the markers folder
         # replacing "param(...)" with actual values from QGIS
         # and renaming to safe layer name
-        pColor = getRGBAColor(props["color"], alpha).strip("'"))
-        pOutline = getRGBAColor(props["outline_color"], alpha).strip("'"))
+        pColor = getRGBAColor(props["color"], alpha).strip("'")
+        pOutline = getRGBAColor(props["outline_color"], alpha).strip("'")
         with open(sl.path()) as f:
             s = f.read()
             s = s.replace('param(fill)', pColor)
